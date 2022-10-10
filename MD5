@@ -1,7 +1,7 @@
-a5a89221965cb9d450925dbcb1b18e84 *DESCRIPTION
-2fe7a7765393978e9b8a48a3a1901b27 *NAMESPACE
+51899bfd50880fe1a070afb32fd75ab1 *DESCRIPTION
+9ddb53f4775e8055f2dfb1f0c1354945 *NAMESPACE
 a080a947aedda94d5f1faae6b193b4f5 *R/aux_fn.R
-ef1b06dec91568392f3534002ce76dd9 *R/spatial_fn.R
+d7c3e063fac0d05e03c22317e76c3475 *R/spatial_fn.R
 64b412bb0bc6e5f33fd9bdee72df6333 *README.md
 79b93aeb460cbe1ca23238f1fa9127f6 *data/gecko.layers.rda
 95fe71844a61236682cf9c8c1e24333c *data/gecko.range.rda
@@ -12,7 +12,7 @@ a5570e1b9a56e15b6bc288fc6210e87d *man/create.east.Rd
 30674985be1e57fd0b8c6fcc6a3c063f *man/create.lat.Rd
 d7fa37bbe2fadb5ffaafefda53161b57 *man/create.long.Rd
 05052716b20f45c2e772f3f1aa9d66a8 *man/create.north.Rd
-d699e5c23ef95a258d9b46bd0f54b219 *man/distance.Rd
+e667510cbe0524d7ca0e71c93e7ca879 *man/distance.Rd
 01b1d0be874c82628b12cf62f46a9528 *man/eoo.Rd
 0d7cf8e503f8ee2279c272ac68d4751b *man/gecko.layers.Rd
 7c4a8347d5dff7821c9653be94a4bfd9 *man/gecko.range.Rd

@@ -1,15 +1,14 @@
 #####GECKO - Geographical Ecology and Conservation Knowledge Online
-#####Version 0.0.1 (2022-05-28)
+#####Version 0.1.1 (2022-05-28)
 #####By Vasco Branco, Pedro Cardoso, Luís Correia
 #####Maintainer: vasco.branco@helsinki.fi
-#####Changed from v0.0.0:
-#####Everything new
+#####Changed from v0.1.0:
+#####Temporarily removed the "cost" option from distance()
 
 ############################################################################
 ##################################PACKAGES##################################
 ############################################################################
 #' @importFrom raster mask trim terrain rasterToPoints rasterize distanceFromPoints minValue extract plot stack sampleRandom predict layerStats getValues scalebar xmin xmax reclassify
-#' @importFrom gdistance geoCorrection transition accCost
 #' @importFrom grDevices dev.copy dev.off chull pdf
 #' @importFrom sp SpatialPolygons Polygons Polygon
 #' @importFrom graphics par text lines points
@@ -165,8 +164,8 @@ create.north <- function(dem){
 #' Create distance layer.
 #' @description Creates a layer depicting distances to records using the minimum, average, distance to the minimum convex polygon or distance taking into account a cost surface.
 #' @param longlat Matrix of longitude and latitude or eastness and northness (two columns in this order) of species occurrence records.
-#' @param layers Raster* object as defined by package raster to serve as model to create distance layer. Cost surface in case of param ="cost".
-#' @param type text string indicating whether the output should be the "minimum", "average", "mcp" or "cost" distance to all records. "mcp" means the distance to the minimum convex polygon encompassing all records.
+#' @param layers Raster* object as defined by package raster to serve as model to create distance layer.
+#' @param type text string indicating whether the output should be the "minimum", "average" or "mcp" distance to all records. "mcp" means the distance to the minimum convex polygon encompassing all records.
 #' @details Using distance to records in models may help limiting the extrapolation of the predicted area much beyond known areas.
 #' @return A RasterLayer object.
 #' @examples userpar <- par(no.readonly = TRUE) 
@@ -179,7 +178,6 @@ create.north <- function(dem){
 #' raster::plot(distance(gecko.records, alt))
 #' raster::plot(distance(gecko.records, alt, type = "average"))
 #' raster::plot(distance(gecko.records, alt, type = "mcp"))
-#' raster::plot(distance(gecko.records, alt, type = "cost"))
 #' par(userpar)
 #' @export
 distance <- function(longlat, layers, type = "minimum"){
@@ -192,11 +190,6 @@ distance <- function(longlat, layers, type = "minimum"){
     }
     layers <- layers/nrow(longlat)
     names(layers) <- "average distance"
-  } else if (type == "cost"){
-    layers <- gdistance::transition(layers, function(x) 1/mean(x), 8)
-    layers <- gdistance::geoCorrection(layers)
-    layers <- gdistance::accCost(layers, as.matrix(longlat))
-    names(layers) <- "cost distance"
   } else {
     layers <- raster::mask(raster::distanceFromPoints(layers, longlat), layers)
     names(layers) <- "minimum distance"
