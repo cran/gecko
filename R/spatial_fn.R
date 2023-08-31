@@ -1,19 +1,19 @@
 #####GECKO - Geographical Ecology and Conservation Knowledge Online
-#####Version 0.1.1 (2022-05-28)
+#####Version 0.1.2 (2022-05-28)
 #####By Vasco Branco, Pedro Cardoso, Luís Correia
 #####Maintainer: vasco.branco@helsinki.fi
-#####Changed from v0.1.0:
-#####Temporarily removed the "cost" option from distance()
+#####Changed from v0.1.1:
+#####Replaced package raster functions with new ones from package terra
 
 ############################################################################
 ##################################PACKAGES##################################
 ############################################################################
-#' @importFrom raster mask trim terrain rasterToPoints rasterize distanceFromPoints minValue extract plot stack sampleRandom predict layerStats getValues scalebar xmin xmax reclassify
+#' @importFrom terra rast vect mask trim terrain as.points as.data.frame rasterize distance extract plot spatSample predict layerCor values sbar xmin xmax classify crds mean where.min xyFromCell
 #' @importFrom grDevices dev.copy dev.off chull pdf
 #' @importFrom sp SpatialPolygons Polygons Polygon
 #' @importFrom graphics par text lines points
 #' @importFrom stats as.dist dist prcomp
-#' @importFrom utils data
+#' @importFrom utils data read.csv
 #' @importFrom geosphere areaPolygon
 #' @importFrom methods is
 NULL
@@ -22,52 +22,50 @@ NULL
 ############################################################################
 ##################################DATASETS##################################
 ############################################################################
+#' Example data packaged with *gecko*
+#' @description Load data included in the package. This includes *gecko.records*,
+#' a matrix of longitude and latitude (two columns) occurrence records for
+#' Hogna maderiana (Walckenaer, 1837); *gecko.range*, a SpatRaster object, as
+#' defined by package terra, of the geographic range of Hogna maderiana
+#' (Walckenaer, 1837); *gecko.layers*, a SpatRaster object with layers 
+#' representing the average annual temperature, total annual precipitation,
+#' altitude and landcover for Madeira Island
+#' (Fick & Hijmans 2017, Tuanmu & Jetz 2014); and *worldborders* is a small vector
+#' of world country borders. 
+#' @param data Name of data in quotes. E.g.: `"gecko.records"`
+#' If `NULL`, the example files will be listed.
+#' @export
+#' @examples
+#' gecko.examples()
+#' gecko.examples("gecko.range")
+#' @source This function is inspired by `palmerpanguins::path_to_file()`
+#' which in turn is based on `readxl::readxl_example()`.
+gecko.examples <- function(data = NULL) {
+  if (is.null(data)) {
+    print(
+      c(
+       "gecko.records", "gecko.range", "gecko.layers", "worldborders" 
+      )
+    )
+    return(NULL)
+  } else {
+    if(data == "gecko.records"){
+      path = system.file(paste0("extdata/gecko.records.csv"), package = "gecko")
+      out = utils::read.csv(path)
+    } else if (data == "gecko.range") {
+      path = system.file(paste0("extdata/gecko.range.tif"), package = "gecko")
+      out = terra::rast(x = path)
+    } else if (data == "gecko.layers") {
+      path = system.file(paste0("extdata/gecko.layers.", c(1:4), ".tif"), package = "gecko")
+      out = terra::rast(x = path)
+    } else if (data == "worldborders") {
+      path = system.file(paste0("extdata/worldborders"), package = "gecko")
+      out = terra::vect(x = path)
+    }
+  }
+  return(out)
+}
 
-#' Occurrence records for Hogna maderiana (Walckenaer, 1837).
-#'
-#' Occurrence records for Hogna maderiana (Walckenaer, 1837).
-#'
-#' @docType data
-#' @keywords datasets
-#' @name gecko.records
-#' @usage data(gecko.records)
-#' @format Matrix of longitude and latitude (two columns) of occurrence records for Hogna maderiana (Walckenaer, 1837), a spider species from Madeira Island.
-NULL
-
-#' Geographic range for Hogna maderiana (Walckenaer, 1837).
-#'
-#' Geographic range for Hogna maderiana (Walckenaer, 1837).
-#'
-#' @docType data
-#' @keywords datasets
-#' @name gecko.range
-#' @usage data(gecko.range)
-#' @format RasterLayer object as defined by package raster of range for Hogna maderiana (Walckenaer, 1837), a spider species from Madeira Island.
-NULL
-
-#' Environmental layers for Madeira.
-#'
-#' Average annual temperature, total annual precipitation, altitude and landcover for Madeira Island (Fick & Hijmans 2017, Tuanmu & Jetz 2014).
-#'
-#' @docType data
-#' @keywords datasets
-#' @name gecko.layers
-#' @usage data(gecko.layers)
-#' @format RasterStack object as defined by package raster.
-#' @references Fick, S.E. & Hijmans, R.J. (2017) Worldclim 2: new 1-km spatial resolution climate surfaces for global land areas. International Journal of Climatology, in press.
-#' @references Tuanmu, M.-N. & Jetz, W. (2014) A global 1-km consensus land-cover product for biodiversity and ecosystem modeling. Global Ecology and Biogeography, 23: 1031-1045.
-NULL
-
-#' World country borders.
-#'
-#' World country borders.
-#'
-#' @docType data
-#' @keywords datasets
-#' @name worldborders
-#' @usage data(worldborders)
-#' @format SpatialPolygonsDataFrame.
-NULL
 
 ##################################################################################
 ##################################MAIN FUNCTIONS##################################
@@ -78,18 +76,18 @@ NULL
 #' @param layers Raster* object as defined by package raster.
 #' @details Excludes all marginal rows and columns with only NA values and change values to NA if they are NA in any of the layers.
 #' @return A Raster* object, same class as layers.
-#' @examples data(gecko.layers)
-#' raster::plot(clean(gecko.layers))
+#' @examples data = gecko.examples("gecko.layers")
+#' terra::plot(clean(data))
 #' @export
 clean <- function(layers){
   
   ##apply mask to have NAs everywhere where any layer has NAs
   maskLayer <- sum(layers)
   maskLayer[!is.na(maskLayer)] <- 1
-  layers <- raster::mask(layers, maskLayer)
+  layers <- terra::mask(layers, maskLayer)
   
   ##crop by excluding external rows and columns with NAs only
-  layers <- raster::trim(layers)
+  layers <- terra::trim(layers)
   
   return(layers)
 }
@@ -100,11 +98,11 @@ clean <- function(layers){
 #' @param dem RasterLayer object of elevation (a digital elevation model - DEM) as defined by package raster.
 #' @details Using elevation, aspect can be calculated. Yet, it is a circular variable (0 = 360) and has to be converted to northness and eastness to be useful for modelling.
 #' @return A RasterLayer object.
-#' @examples data(gecko.layers)
-#' raster::plot(create.east(gecko.layers[[3]]))
+#' @examples data = gecko.examples("gecko.layers")
+#' terra::plot(create.east(data[[3]]))
 #' @export
 create.east <- function(dem){
-  asp <- raster::terrain(dem, opt = "aspect")
+  asp <- terra::terrain(dem, v = "aspect")
   return(sin(asp))
 }
 
@@ -114,15 +112,16 @@ create.east <- function(dem){
 #' @param layers Raster* object as defined by package raster.
 #' @details Using latitude (and longitude) in models may help limiting the extrapolation of the predicted area much beyond known areas.
 #' @return A RasterLayer object.
-#' @examples data(gecko.layers)
-#' raster::plot(create.lat(gecko.layers[[1]]))
+#' @examples data = gecko.examples("gecko.layers")
+#' terra::plot(create.lat(data[[1]]))
 #' @export
 create.lat <- function(layers){
-  if(dim(layers)[3] > 1)
-    layers <- layers[[3]]
-  x <- raster::rasterToPoints(layers)[,1:2]
-  lat <- raster::rasterize(x, layers, x[,2])
-  lat <- raster::mask(lat, layers)
+  if(dim(layers)[3] > 1){
+    layers <- layers[[1]]
+  }
+  x <- terra::as.points(layers)[,1:2]
+  lat <- terra::rasterize(terra::crds(x), y = layers, values = terra::crds(x)[,1] )
+  lat <- terra::mask(lat, layers)
   names(lat) <- "latitude"
   return(lat)
 }
@@ -133,15 +132,16 @@ create.lat <- function(layers){
 #' @param layers Raster* object as defined by package raster.
 #' @details Using longitude (and latitude) in models may help limiting the extrapolation of the predicted area much beyond known areas.
 #' @return A RasterLayer object.
-#' @examples data(gecko.layers)
-#' raster::plot(create.long(gecko.layers))
+#' @examples data = gecko.examples("gecko.layers")
+#' terra::plot(create.long(data))
 #' @export
 create.long <- function(layers){
-  if(dim(layers)[3] > 1)
-    layers <- layers[[3]]
-  x <- raster::rasterToPoints(layers)[,1:2]
-  long <- raster::rasterize(x, layers, x[,1])
-  long <- raster::mask(long, layers)
+  if(dim(layers)[3] > 1) {
+    layers <- layers[[1]]
+  }
+  x <- terra::as.points(layers)[,1:2]
+  long <- terra::rasterize(terra::crds(x), y = layers, values = terra::crds(x)[,2] )
+  long <- terra::mask(long, layers)
   names(long) <- "longitude"
   return(long)
 }
@@ -152,11 +152,11 @@ create.long <- function(layers){
 #' @param dem RasterLayer object of elevation (a digital elevation model - DEM) as defined by package raster.
 #' @details Using elevation, aspect can be calculated. Yet, it is a circular variable (0 = 360) and has to be converted to northness and eastness to be useful for modelling.
 #' @return A RasterLayer object.
-#' @examples data(gecko.layers)
-#' raster::plot(create.north(gecko.layers[[3]]))
+#' @examples data = gecko.examples("gecko.layers")
+#' terra::plot(create.north(data[[3]]))
 #' @export
 create.north <- function(dem){
-  asp <- raster::terrain(dem, opt = "aspect")
+  asp <- terra::terrain(dem, v = "aspect")
   return(cos(asp))
 }
 
@@ -169,29 +169,57 @@ create.north <- function(dem){
 #' @details Using distance to records in models may help limiting the extrapolation of the predicted area much beyond known areas.
 #' @return A RasterLayer object.
 #' @examples userpar <- par(no.readonly = TRUE) 
-#' data(gecko.layers)
-#' alt = gecko.layers[[3]]
-#' data(gecko.records)
+#' layers = gecko.examples("gecko.layers")
+#' alt = layers[[3]]
+#' records = gecko.examples("gecko.records")
 #' par(mfrow=c(3,2))
-#' raster::plot(alt)
-#' points(gecko.records)
-#' raster::plot(distance(gecko.records, alt))
-#' raster::plot(distance(gecko.records, alt, type = "average"))
-#' raster::plot(distance(gecko.records, alt, type = "mcp"))
+#' terra::plot(alt)
+#' points(records)
+#' terra::plot(distance(records, alt))
+#' terra::plot(distance(records, alt, type = "average"))
 #' par(userpar)
 #' @export
 distance <- function(longlat, layers, type = "minimum"){
-  if(dim(layers)[3] > 1)
+  if(dim(layers)[3] > 1){
     layers <- layers[[1]]
-  layers[!is.na(layers)] <- 0
+  }
+    
+  #layers[] <- 0
+  
+  layers_template = terra::classify(!is.na(layers), c(TRUE, 0))
+  
   if(type == "average"){
-    for(d in 1:nrow(longlat)){
-      layers <- layers + raster::distanceFromPoints(layers, longlat[d,])
+    for (d in 1:nrow(longlat)) {
+      # layers <- layers + raster::distanceFromPoints(layers, longlat[d,]) #  he distance unit is in meters if the coordinate reference system (crs) of the Raster* object is (+proj=longlat) or assumed to be if the crs is NA. In all other cases it is in the units defined by the crs (which typically is meters).
+      layers <- c(
+        layers,
+        terra::distance(
+          layers_template,
+          terra::vect(longlat[d, ],
+            geom = colnames(longlat),
+            crs = terra::crs(layers)
+          )
+        )
+      )
     }
-    layers <- layers/nrow(longlat)
+    layers = layers[[2:dim(layers)[3]]]
+    # No mean?
+    layers = terra::mean(layers)
+    
+    # layers <- layers/nrow(longlat)
     names(layers) <- "average distance"
   } else {
-    layers <- raster::mask(raster::distanceFromPoints(layers, longlat), layers)
+    #layers <- raster::mask(raster::distanceFromPoints(layers, longlat), layers)
+    layers <- terra::mask(
+      terra::distance(
+        layers,
+        terra::vect(longlat,
+          geom = colnames(longlat),
+          crs = terra::crs(layers)
+        )
+      ),
+      layers
+    )
     names(layers) <- "minimum distance"
   }
   return(layers)
@@ -268,26 +296,49 @@ thin <- function(longlat, distance = 0.01, relative = TRUE, runs = 100){
 #' @param buffer Maximum distance in map units that a record will move. If 0 all NA records will be changed.
 #' @details Often records are in coastal or other areas for which no environmental data is available. This function moves such records to the closest cells with data so that no information is lost during modelling.
 #' @return A matrix with new coordinate values.
-#' @examples rast <- raster::raster(matrix(c(rep(NA,100), rep(1,100), rep(NA,100)), ncol = 15))
+#' @examples rast <- terra::rast(matrix(c(rep(NA,100), rep(1,100), rep(NA,100)), ncol = 15))
 #' pts <- cbind(runif(100, 0, 0.55), runif(100, 0, 1))
-#' raster::plot(rast)
+#' terra::plot(rast)
 #' points(pts)
 #' pts <- move(pts, rast)
-#' raster::plot(rast)
+#' terra::plot(rast)
 #' points(pts)
 #' @export
 move <- function(longlat, layers, buffer = 0){
-  layers <- layers[[1]]
-  values <- raster::extract(layers, longlat)   #get values of each record
+  if(dim(layers)[3] > 1){
+    layers <- layers[[1]]
+  }
+  
+  if(is(longlat, "matrix")){
+    longlat = as.data.frame(longlat)
+  }
+  
+  if(terra::crs(layers) == ""){
+    terra::crs(layers) = "+proj=longlat +ellps=WGS84 +towgs84=0,0,0,0,0,0,0 +no_defs"
+  }
+  
+  # layers <- layers[[1]]
+  values <- terra::extract(layers, longlat)   #get values of each record
   suppressWarnings(
     for(i in which(is.na(values))){    #if a value is NA, move it
-      distRaster = raster::distanceFromPoints(layers, longlat[i,])
-      distRaster = raster::mask(distRaster, layers)
-      vmin = raster::minValue(distRaster)
+      # Distance does not work when the crs is "". needs an exception
+      distRaster <- terra::distance(
+        layers,
+        terra::vect(as.data.frame(longlat)[i, ], # remove if enforced at start
+          geom = colnames(longlat),
+          crs = terra::crs(layers)
+        )
+      )
+      distRaster <- terra::mask(distRaster, layers)
+      # vmin = distRaster@ptr$range_min
+      vmin <- terra::where.min(distRaster)
+      
       if(buffer <= 0 || buffer > vmin){
-        vmin = raster::rasterToPoints(distRaster, function(x) x == vmin)
-        longlat[i,] = vmin[1,1:2]
+        # vmin = terra::as.points(distRaster, function(x) x == vmin)
+        longlat[i,] = terra::xyFromCell(distRaster, vmin[2]) # vmin[1,1:2]
       }
+      
+      
     }
   )
   return(longlat)
@@ -300,25 +351,29 @@ move <- function(longlat, layers, buffer = 0){
 #' @param layers Raster* object as defined by package raster. It can be any set of environmental layers thought to allow the identification of environmental outliers.
 #' @details Erroneous data sources or errors in transcriptions may introduce outliers that can be easily detected by looking at simple graphs of geographical or environmental space.
 #' @return A data.frame with coordinate values and distance to centroid in pca is returned. Two plots are drawn for visual inspection. The environmental plot includes row numbers for easy identification of possible outliers.
-#' @examples data(gecko.records)
-#' data(gecko.layers)
-#' outliers(gecko.records, gecko.layers[[1:3]])
+#' @examples records = gecko.examples("gecko.records")
+#' layers = gecko.examples("gecko.layers")
+#' outliers(records, layers[[1:3]])
 #' @export
 outliers <- function(longlat, layers){
   userpar <- par(no.readonly = TRUE) 
   on.exit(par(userpar))
-  if(dim(layers)[3] == 33)      #if layers come from read
-    pca <- reduce(layers[[1:19]], n = 2)
-  else
+  if(dim(layers)[3] == 33){
+    pca <- reduce(layers[[1:19]], n = 2) #if layers come from read
+  } else {
     pca <- reduce(layers, n = 2)
+  }
+    
+  
   ##extract pca values from longlat
-  pca <- as.data.frame(raster::extract(pca, longlat))
+  pca <- as.data.frame(terra::extract(pca, longlat))
   goodRows <-  which(!is.na(pca[,1]))
   pca <- pca[goodRows,]
   longlat <- longlat[goodRows,]
   par(mfrow = c(1,2))
   map.draw(longlat, layers[[1]], spName = "Geographical")
-  raster::plot(pca, main = "Environmental", type = "n")
+  # plot(pca, main = "Environmental", type = "n")
+  plot(pca, main = "Environmental")
   centroid = colMeans(pca)
   text(centroid[1], centroid[2], label = "X")
   for(i in 1:nrow(pca)){
@@ -345,18 +400,22 @@ outliers <- function(longlat, layers){
 #' @export
 reduce <- function(layers, method = "pca", n = NULL, thres = NULL){
   ##method = "pca, cor", if unrecognized method only reduce landcover but not climate
-  out <- raster::stack()
-  
+
   if(dim(layers)[3] == 33){          ##check if layers are obtained with read
-    out <- raster::stack(layers[[33]])
+    out <- c(layers[[33]])
     layers = layers[[1:19]]
   }
+  # HANDLE COR
   if(method == "cor"){                       ##if correlation
     if(is.null(n)){
       if(is.null(thres))
         thres = 0.7
       for(i in 1:dim(layers)[3]){                  ##delete layers until none are correlated above threshold
-        cor = as.matrix(as.dist(layerStats(layers, 'pearson', na.rm = TRUE)[[1]]))
+        # cor = as.matrix(as.dist(layerStats(layers, 'pearson', na.rm = TRUE)[[1]]))
+        cor = as.matrix(
+          as.dist(terra::layerCor(layers, 'pearson', na.rm = TRUE)[[1]])
+          )
+        
         if(max(cor) < thres)
           break
         corLayer = sample(which(cor == max(cor), arr.ind = TRUE)[,1],1)
@@ -364,7 +423,9 @@ reduce <- function(layers, method = "pca", n = NULL, thres = NULL){
       }
     } else {
       while (dim(layers)[3] > n){                   ##delete layers until reaching n layers
-        cor = abs(as.matrix(as.dist(layerStats(layers, 'pearson', na.rm = TRUE)[[1]])))
+        cor = abs(as.matrix(as.dist(
+          terra::layerCor(layers, 'pearson', na.rm = TRUE)[[1]])))
+        
         corLayer = sample(which(cor == max(cor), arr.ind = TRUE)[,1],1)
         layers = layers[[-corLayer]]
       }
@@ -372,15 +433,21 @@ reduce <- function(layers, method = "pca", n = NULL, thres = NULL){
   } else if(method == "pca"){                                  ##if pca
     if(is.null(n))
       n = 3
-    if(sum(!is.na(getValues(layers[[1]]))) > 2000)
-      sr <- raster::sampleRandom(layers, 1000)
+    if(sum(!is.na(terra::values(layers[[1]], mat = FALSE))) > 2000)
+      sr <- terra::spatSample(layers, 1000)
     else
-      sr <- raster::sampleRandom(layers, as.integer(sum(!is.na(getValues(layers[[1]])))/2))
+      sr <- terra::spatSample(layers, as.integer(sum(!is.na(terra::values(layers[[1]], mat = FALSE)))/2), na.rm = TRUE) # added na.rm
     pca <- prcomp(sr)
-    layers <- raster::predict(layers, pca, index = 1:n)
-    for(i in 1:n)
+    layers <- terra::predict(layers, pca, index = 1:n)
+    for(i in 1:n){
       names(layers[[i]]) <- paste("pca",i)
+    }
   }
-  out <- raster::stack(layers, out)
+  
+  if(dim(layers)[3] == 33){
+    out <- c(layers, out)
+  } else {
+    out <- layers
+  }
   return(out)
 }

@@ -19,6 +19,6 @@ Create a layer depicting eastness based on an elevation layer.
 Using elevation, aspect can be calculated. Yet, it is a circular variable (0 = 360) and has to be converted to northness and eastness to be useful for modelling.
 }
 \examples{
-data(gecko.layers)
-raster::plot(create.east(gecko.layers[[3]]))
+data = gecko.examples("gecko.layers")
+terra::plot(create.east(data[[3]]))
 }

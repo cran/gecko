@@ -21,7 +21,7 @@ Draws plots of sites in geographical (longlat) and environmental (2-axis PCA) sp
 Erroneous data sources or errors in transcriptions may introduce outliers that can be easily detected by looking at simple graphs of geographical or environmental space.
 }
 \examples{
-data(gecko.records)
-data(gecko.layers)
-outliers(gecko.records, gecko.layers[[1:3]])
+records = gecko.examples("gecko.records")
+layers = gecko.examples("gecko.layers")
+outliers(records, layers[[1:3]])
 }

@@ -23,11 +23,11 @@ Identifies and moves presence records to cells with environmental values.
 Often records are in coastal or other areas for which no environmental data is available. This function moves such records to the closest cells with data so that no information is lost during modelling.
 }
 \examples{
-rast <- raster::raster(matrix(c(rep(NA,100), rep(1,100), rep(NA,100)), ncol = 15))
+rast <- terra::rast(matrix(c(rep(NA,100), rep(1,100), rep(NA,100)), ncol = 15))
 pts <- cbind(runif(100, 0, 0.55), runif(100, 0, 1))
-raster::plot(rast)
+terra::plot(rast)
 points(pts)
 pts <- move(pts, rast)
-raster::plot(rast)
+terra::plot(rast)
 points(pts)
 }

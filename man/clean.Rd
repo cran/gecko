@@ -19,6 +19,6 @@ Crop raster layers to minimum size possible and uniformize NA values across laye
 Excludes all marginal rows and columns with only NA values and change values to NA if they are NA in any of the layers.
 }
 \examples{
-data(gecko.layers)
-raster::plot(clean(gecko.layers))
+data = gecko.examples("gecko.layers")
+terra::plot(clean(data))
 }

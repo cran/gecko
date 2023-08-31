@@ -19,6 +19,6 @@ Create a layer depicting latitude based on any other.
 Using latitude (and longitude) in models may help limiting the extrapolation of the predicted area much beyond known areas.
 }
 \examples{
-data(gecko.layers)
-raster::plot(create.lat(gecko.layers[[1]]))
+data = gecko.examples("gecko.layers")
+terra::plot(create.lat(data[[1]]))
 }

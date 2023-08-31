@@ -24,14 +24,13 @@ Using distance to records in models may help limiting the extrapolation of the p
 }
 \examples{
 userpar <- par(no.readonly = TRUE) 
-data(gecko.layers)
-alt = gecko.layers[[3]]
-data(gecko.records)
+layers = gecko.examples("gecko.layers")
+alt = layers[[3]]
+records = gecko.examples("gecko.records")
 par(mfrow=c(3,2))
-raster::plot(alt)
-points(gecko.records)
-raster::plot(distance(gecko.records, alt))
-raster::plot(distance(gecko.records, alt, type = "average"))
-raster::plot(distance(gecko.records, alt, type = "mcp"))
+terra::plot(alt)
+points(records)
+terra::plot(distance(records, alt))
+terra::plot(distance(records, alt, type = "average"))
 par(userpar)
 }
