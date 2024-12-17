@@ -1,12 +1,11 @@
-07984330267d528596724b951371115c *DESCRIPTION
+e74bd0e690a9ff4b88a3e66ba443eae8 *DESCRIPTION
 d5dbe9d10dcfa865087f2e251160300d *NAMESPACE
 12770e61b4de2dc65d1f5c4c465e681e *R/access_fn.R
-7aa8af98c0d9c0acb596e25e99d3a665 *R/aux_fn.R
+753e3b4fa86d38d438ced59782e6d528 *R/aux_fn.R
 fae0edfef4dafcbda8aeb5f59bbec7f8 *R/globals.R
-40893350a56b98c44827c22b56ecfcf9 *R/outlier_fn.R
+2a77dd86085e63232d4ebdf3c5082f79 *R/outlier_fn.R
 8b32e4214a725d6dc97163c7c7fbc182 *R/spatial_fn.R
 97c62c596d3177345c77ae3d943516b9 *R/spectrify.R
-64b412bb0bc6e5f33fd9bdee72df6333 *README.md
 d447fd850d1d03a0062c7afd9bc57074 *inst/extdata/gecko.layers.1.tif
 11848505ef07332d9972af43c0fc83fe *inst/extdata/gecko.layers.2.tif
 9052c6a96cfce11b5d3d9578cb06a2ef *inst/extdata/gecko.layers.3.tif
@@ -26,6 +25,7 @@ a012926066786404d701369c7c7b1496 *man/create.east.Rd
 5da1639b3660ed610735a9b703860aa4 *man/create.long.Rd
 a13206e3d8e98d666b47eea951cd5b0e *man/create.north.Rd
 c1412e8931781e52765a79f0c0921e5a *man/distance.Rd
+a959cccf39d253d625c178befddcc872 *man/figures/logo.png
 e56d8f5d3307a2bc4afd6b6f3f0d0590 *man/gecko.data.Rd
 9abc6065a7929c30cdbc8ff7d8564f7c *man/gecko.getDir.Rd
 675f2349a3d8f9656ff7720771ee0301 *man/gecko.setDir.Rd
